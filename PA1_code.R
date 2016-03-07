@@ -1,10 +1,9 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-
+# ---
+#   title: "Reproducible Research: Peer Assessment 1"
+# output: 
+#   html_document:
+#   keep_md: true
+# ---
 
 ## Initial Setup
 
@@ -22,57 +21,57 @@ setwd(this.dir)
 ## Loading and preprocessing the data
 
 activity <- read.csv(unz("activity.zip", "activity.csv"))
+# clean activity with no NA values:
+#activity_no_na <- na.omit(activity_raw)
+# clean activity with NA values in steps column set to 0
+# activity_na_zero <- activity
+# activity_na_zero$steps[is.na(activity_na_zero$steps)] <- 0
+
 activity$date <- as.Date(activity$date)
 
-
 ## What is mean total number of steps taken per day?
-
-# Steps taken per day:
 steps_per_date <- aggregate(steps~date, activity, sum)
 
 steps_per_date_histogram <-
   hist(steps_per_date$steps, main="Histogram of Steps",
        xlab="Steps", ylab="Frequency")
-print(steps_per_date_histogram)
 steps_per_date_mean <- mean(steps_per_date$steps)
-paste("Mean steps per day:", steps_per_date)
 steps_per_date_median <- median(steps_per_date$steps)
-paste("Median steps per day:", steps_per_date_median)
+
 
 ## What is the average daily activity pattern?
-
 steps_per_interval <- aggregate(steps~interval, activity, mean)
-
-#Time series plot of average number of steps per interval:
 steps_per_interval_ts <-
   plot(x=steps_per_interval$interval, y=steps_per_interval$steps, type="l",
        main="Time Series of Average Steps", xlab="Interval", ylab="Steps")
+# don't try editing what's below.  Yes it's horrible.
 interval_with_max_mean_steps <- 
   steps_per_interval[steps_per_interval$steps == max(steps_per_interval$steps),]$interval
 # most steps get taken around 8:35am
 
+
 ## Imputing missing values
 number_of_rows_with_na <- sum(is.na(activity$steps))
-paste("Total number of missing values:", number_of_rows_with_na)
-# Calculating mean steps for each interval:
+print(sprintf("The number of rows with NA is: %04d", number_of_rows_with_na))
+
 activity_na_corrected <- activity
 all_na <- is.na(activity_na_corrected$steps)
 acivity_avg <- tapply(activity_na_corrected$steps, activity_na_corrected$interval, mean, na.rm=TRUE)
 activity_na_corrected$steps[all_na] <- acivity_avg[as.character(activity_na_corrected$interval[all_na])]
-# created data frame with na values replaced with invterval averages
+
 steps_per_date_corrected <- aggregate(steps~date, activity_na_corrected, sum)
-# histogram of steps per day:
 steps_per_date_histogram_corrected <-
   hist(steps_per_date_corrected$steps, main="Histogram of Steps Corrected",
        xlab="Steps", ylab="Frequency")
-print(steps_per_date_histogram_corrected)
 steps_per_date_mean_corrected <- mean(steps_per_date_corrected$steps)
 steps_per_date_median_corrected <- median(steps_per_date_corrected$steps)
 # very little difference in the overall mean and median of steps per date
 # for initial activity vs activity with na replaced with mean values per interval
 
+
 ## Are there differences in activity patterns between weekdays and weekends?
-# new factor variable for weekend vs weekday:
+
+
 for (i in 1:nrow(activity_na_corrected)) {
   if (weekdays(activity_na_corrected$date[i]) == "Saturday" |
       weekdays(activity_na_corrected$date[i]) == "Sunday") {
@@ -82,14 +81,15 @@ for (i in 1:nrow(activity_na_corrected)) {
   }
 }
 
-# Panel plot data code
+
 activity_no_na <- activity_na_corrected %>%
   group_by(interval, daytype) %>%
   summarize(steps = mean(steps))
 
-# Panel plot weekday vs weekend
 panelplot <- ggplot(activity_no_na, aes(x=interval, y=steps, color = daytype)) +
   geom_line() +
   facet_wrap(~daytype, ncol = 1, nrow=2)
 
 print(panelplot)
+
+
